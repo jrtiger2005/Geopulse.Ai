@@ -1,0 +1,30 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and generated indexes
+*.db
+*.sqlite3
+chroma_db/
+faiss_index/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
