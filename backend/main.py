@@ -1,12 +1,16 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from rag.retriever import retrieve
 from typing import Optional
 from uuid import uuid4
+import json
+import urllib.request
+import urllib.error
 
-# Temporary converstion memory 
-converstion_memory = {}
+# Temporary conversation memory 
+conversation_memory = {}
 MAX_HISTORY = 10
 
 
@@ -15,11 +19,18 @@ app = FastAPI(
     description="Agentic AI platform for geopolitical intelligence",
     version="1.0.0"
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ChatRequest(BaseModel):
     message: str
-    converstion_id: Optional[str] = None
+    conversation_id: str | None = None
 
 
 @app.get("/")
@@ -45,10 +56,10 @@ def chat(request: ChatRequest):
     import urllib.request
     import urllib.error
 
-    converstion_id = request.converstion_id or str(uuid4())
-    history = converstion_memory.get(converstion_id, [])
+    conversation_id = request.conversation_id or str(uuid4())
+    history = conversation_memory.get(conversation_id, [])
     history_text = "\n".join(
-        f"{message['role']}: {message['content']}" for message in history)
+        f"{item['role']}: {item['content']}" for item in history)
 
     results = retrieve(request.message)
     print("\n--- RETRIEVED CONTEXT --- ")
@@ -58,6 +69,7 @@ def chat(request: ChatRequest):
 
     if not results:
         return {
+            "conversation_id": conversation_id,
             "question": request.message,
             "answer": (
                 "I couldn't find relevant information "
@@ -91,7 +103,7 @@ Do not invent historical or legal reasons that the context does not provide.
 If the context does not explain why something is true, say so.
 Preserve important qualifications and exceptions from the context.
 
-CONVERSTION HISTORY:
+CONVERSATION HISTORY:
 {history_text}
 
 
